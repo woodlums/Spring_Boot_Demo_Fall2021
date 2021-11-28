@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html language="en">
+<head>
+    <title>Sales Item Manager</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/3/jquery.inputmask.bundle.js"></script>
+    <!-- <link rel="stylesheet" type="text/css" href="style.css"> -->
+
+    <style>
+	  	#displayInfo{
+	/*border: 1px solid red;*/
+		width:750px;
+		/*height:250px;*/
+		padding: 5px;
+		overflow: auto;
+	}
+
+
+	#personTable {
+	  font-family: Arial, Helvetica, sans-serif;
+	  border-collapse: collapse;
+	  width: 650px;
+	  /*height: 240px;*/
+	}
+
+	#personTable td {
+	  border: 2px solid #ddd;
+	  padding: 8px;
+	  text-align: center;
+	}
+
+	#personTable tr:nth-child(even){background-color: #f2f2f2;}
+
+	#personTable tr:hover {background-color: #ddd;}
+
+	#personTable thead {
+	  padding-top: 12px;
+	  padding-bottom: 12px;
+	  background-color: #ddd;
+	  font-weight:bold;
+	}
+	  </style>
+
+
+
+    <script>
+			//declaring array of persons
+	var persons = [];
+
+	//class Person
+	function Person(id, name, price){
+		this.ID = id;
+		this.Name = name;
+		this.Price = price;
+	}
+
+	function addToArrayObjects(id, name, price)
+	{
+		var person = new Person(id, name, price);
+		persons.push(person);
+		buildDataTable();
+	}
+
+	function buildDataTable(){
+
+		var myTableSpan = document.getElementById("displayInfo");
+		myTableSpan.innerHTML = " ";
+
+		// get the reference for the body
+		var body = document.getElementsByTagName("body")[0];
+
+		// creates a <table> element and a <tbody> element
+		var tbl = document.createElement("table");
+		tbl.setAttribute('id', 'personTable'); // table id.
+
+		var header =  document.createElement('thead')
+		var headingRow = document.createElement('tr')
+
+		var headingCell1 = document.createElement('td')
+		var headingText1 = document.createTextNode('ID')
+		headingCell1.appendChild(headingText1)
+		headingRow.appendChild(headingCell1)
+
+		var headingCell1 = document.createElement('td')
+		var headingText1 = document.createTextNode('Name')
+		headingCell1.appendChild(headingText1)
+		headingRow.appendChild(headingCell1)
+
+		var headingCell2 = document.createElement('td')
+		var headingText2 = document.createTextNode('Price')
+		headingCell2.appendChild(headingText2)
+		headingRow.appendChild(headingCell2)
+
+		var headingCell3 = document.createElement('td')
+		var headingText3 = document.createTextNode('Actions')
+		headingCell3.appendChild(headingText3)
+		headingRow.appendChild(headingCell3)
+
+		header.appendChild(headingRow)
+		tbl.appendChild(header)
+		//var header = "<th>Header</th>";
+		var tblBody = document.createElement("tbody");
+
+
+		// creating all cells
+		for (var i = 0; i < persons.length; i++) {
+			// creates a table row
+			var row = document.createElement("tr");
+			var trUrl;
+
+			for (var j = 0; j < 4; j++) {
+				// Create a <td> element and a text node, make the text
+				// node the contents of the <td>, and put the <td> at
+				// the end of the table row
+				var cell = document.createElement("td");
+				var cellText;
+
+				switch(j){
+					case 0:
+						cellText = document.createTextNode(persons[i].ID);
+						cell.appendChild(cellText);
+						trUrl = 'index_detail.html?contactid=' + persons[i].ID;
+						//cell.setAttribute('id', persons[i].ID);
+						row.appendChild(cell);
+						break;
+					case 1:
+						//cellText = document.createTextNode(persons[i].GivenName + " " + persons[i].FamilyName);
+						cellText = document.createTextNode(persons[i].Name);
+         				trUrl += '&firstname=' + persons[i].GivenName + '&lastname=' + persons[i].FamilyName;
+						cell.appendChild(cellText);
+						row.appendChild(cell);
+						break;
+					case 2:
+						cellText = document.createTextNode(persons[i].Price);
+						cell.appendChild(cellText);
+         				trUrl += '&phonenumber=' + persons[i].PhoneNumber;
+						row.appendChild(cell);
+						break;
+					case 3:
+						cellText = document.createTextNode("");
+						cell.appendChild(cellText);
+						row.appendChild(cell);
+
+						// add a button in every new row in the last column.
+						var button = document.createElement('input');
+
+						// set input attributes.
+						button.setAttribute('type', 'button');
+						button.setAttribute('value', 'DELETE');
+
+						// add button's 'onclick' event.
+						button.setAttribute('onclick', 'removeRow(this)');
+						cell.appendChild(button);
+
+				}
+			}
+
+			// add the row to the end of the table body
+			//row.setAttribute('data-href', trUrl);
+
+			tblBody.appendChild(row);
+		}
+
+		tbl.appendChild(tblBody);
+		myTableSpan.appendChild(tbl);
+	}
+
+	function getAllContacts() {
+
+		//res.setHeader("Access-Control-Allow-Origin", "null");
+		const url = 'http://localhost:8080/api/v1/items';
+		//alert(url);
+		fetch(url).then(data => data.json())
+		.then((json) => {
+
+			//remove all persons
+			persons.length = 0;
+
+			for (i in json)
+			{
+				addToArrayObjects(json[i].id, json[i].name, json[i].price);
+				//alert (json[i].ID);
+			}
+
+			if(persons.length == 0){
+				buildDataTable();
+				document.getElementById("errMsg").innerHTML = "No contact information available!"; // + JSON.stringify(json);
+			}
+		});
+	}
+
+	document.addEventListener('DOMContentLoaded',
+		function() {getAllContacts();}, false);
+
+	// delete TABLE row function.
+    function removeRow(oButton) {
+
+		initializeMsgs();
+
+		var personTable = document.getElementById('personTable');
+		var rowIndex = oButton.parentNode.parentNode.rowIndex-1; //row index of the table minus the header row
+
+		var id = personTable.rows[rowIndex+1].cells[0].innerHTML; // ID value
+		deactivate(id);
+
+    }
+
+	function add(n, p) {
+
+		var data = {'name': n, 'price': p};
+		const url = `http://localhost:8080/api/v1/items`;
+
+		fetch(
+			url,
+			{
+				headers:{"Content-Type": "application/json"},
+				body: JSON.stringify(data),
+				method: "POST"
+			}
+		).then(data => data.json())
+		.then((json) => {
+
+				if(json.message)
+				{
+					document.getElementById("errMsg2").innerHTML = json.message;
+				}
+				else
+				{
+					var response = `Record add successful, the new ID is ${json.id}!`;
+					document.getElementById("errMsg").innerHTML = "";
+					document.getElementById("errMsg2").innerHTML = response;
+					getAllContacts();
+				}
+		  })
+	};
+
+	//initialize error messages
+	function initializeMsgs()
+	{
+		document.getElementById("errMsg").innerHTML = " ";
+		document.getElementById("errMsg2").innerHTML = " ";
+	}
+
+// validates phoneNumber using a RegExp
+	function validate_price(input)
+	{
+		//alert(input);
+		//const check_phoneNumber = /^[0-9]{3}-[0-9]{3}-[0-9]{4}$/;
+
+		if (input.trim() != "")
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	// validates name using a RegExp
+	function validate_name(input)
+	{
+		//alert(input);
+		const check_character = /^.*[a-zA-Z]$/;
+
+		if (check_character.test(input))
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	function validateInputs()
+	{
+		initializeMsgs();
+
+		let n = document.getElementById("add_name").value;
+		let p = document.getElementById("add_price").value;
+
+		if(validate_name(n) && validate_price(p))
+		{
+			var str = "Added!";
+			var result = str.fontcolor("green");
+			document.getElementById("errMsg2").innerHTML = result;
+
+			add(n,p);
+
+			document.getElementById('add_name').value = '';
+			document.getElementById('add_price').value = '';
+		}
+		else
+		{
+			//alert("nope");
+			document.getElementById("errMsg2").innerHTML = "Please enter correct values!";
+			document.getElementById("add_name").focus();
+		}
+	}
+	  </script>
+</head>
+<body>
+<h1>
+    <p align="center">Sales Item Manager</p>
+</h1>
+<div class="container" id="mainDiv">
+    <div class="btn-group-vertical">
+        <table class="table">
+            <tr>
+                <td width="150px;" style="text-align: left; padding:10px;">
+                    <table>
+                        <tr>
+                            <td style="padding:5px;"><button type="button" class="btn btn-primary" style="height:40px;width:175px;" onclick="getAllContacts();">Refresh Items</button></td>
+                        </tr>
+                    </table>
+                </td>
+                <td colspan="2" style="width:100%">
+                    <div id="displayInfo"></div>
+                </td>
+            </tr>
+        </table>
+        <p style="font-weight:bold;font-size:24px;color:red;height:40px;text-align:center;">
+            <span id="errMsg"></span>
+        </p>
+        <div class="form-group" id="divAddContact">
+            <table class="table" style="height:250px;width:770px;">
+                <tr>
+                    <td>
+                        <table style="width:760px;">
+                            <tr>
+                                <td colspan="2" style="width:100px;">
+                                    <button id="btnAddContact" onclick="validateInputs();" class="btn btn-primary" style="height:50px;width:175px;">Add an Item</button>
+                                </td>
+                                <td style="vertical-align: bottom;"><label for="add_name">Name</label></td>
+                                <td style="vertical-align: bottom;"><label for="add_price">Price</label></td>
+                                <td style="width:120px">&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td colspan="2" style="width:100px;">
+                                <td><input type="text" id="add_name" class="form-control" required></input></td>
+                                <td><input type="text" id="add_price" class="form-control" required></input></td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr style="height:40px;">
+                    <td style="font-weight:bold;font-size:24px;color:red;text-align:center">
+                        <span id="errMsg2"></span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <script>
+         $(document).ready(function (){
+         	//alert("document ready");
+         	$(document.body).on("click", "tr[data-href]", function() {
+         		window.location.href = this.dataset.href;
+         	});
+         });
+
+      </script>
+</div>
+</body>
+</html>
